@@ -3,7 +3,7 @@
 % 09/08/2024
 clc, clear, close all
 
-%% Track etraction and formating from TrackMate (xml) files
+%% Track extraction and formating from TrackMate (xml) files
 % Call tracks file
 tracks_path = '/Users/Julio/Desktop/20240801_LM_ERK_nuclei/Ctr_4';
 tracks_file = 'Ctr_IF5_Pos3_CFP_16h.xml';
