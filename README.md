@@ -13,6 +13,10 @@ This code is divided in four main sections:
 3. Single cell ERK activation calculation and suitable formating for ARCOS algorithm.
 4. Single cell ERK signal kymograph and radial alignment figure generation.
 
+Previous work done in the Bastounis Lab about ERK signaling in cell monolayers include:
+1. Mechanical competition triggered by innate immune signaling drives the collective extrusion of bacterially infected epithelial cells ([publicacion here](https://www.sciencedirect.com/science/article/pii/S1534580721000708)).
+2. ERK activation waves are key drivers in the mechanical cell competition that leads to collective onslaught of bacterially infected cells ([publication here](https://www.cell.com/biophysj/fulltext/S0006-3495(23)00952-9)).
+
 ## Collective ERK signal analysis with ARCOS algorithm
 
 The R file <ins> *ARCOS_analysis_pipeline.R* </ins> requires the ARCOS_matrix file (.csv) generated in the previous step. 
@@ -20,6 +24,6 @@ The R file <ins> *ARCOS_analysis_pipeline.R* </ins> requires the ARCOS_matrix fi
 This code is divided in two main sections:
 
 1. Data reading, detection of collective events by the ARCOS algortihm and results storage.
-2. Results reading, filtering and calculation of median events per hour and unit area as well as median area of events. 
+2. Results reading, filtering and calculation of median events normailized per hour and unit area (Events/h-mm<sup>2</sup>) as well as median area of events (mm<sup>2</sup>). 
 
-The original publication with the implimentation and validations of the ARCOS algorithm can be found [here](https://rupress.org/jcb/article/222/10/e202207048/276138/Automatic-detection-of-spatio-temporal-signaling) 
+The original publication with the implimentation and validations of the ARCOS algorithm can be found [here](https://rupress.org/jcb/article/222/10/e202207048/276138/Automatic-detection-of-spatio-temporal-signaling).
