@@ -128,62 +128,7 @@ track_nuclei = cat(2,vars,track_nuclei);
 % save analysis in cell per nucleus: time, x-coor, y-coor, ERK intensity
 save([tracks_path,filesep,'Analysis.mat'],'track_nuclei','Nuclei_ERK_int','time_step','img_size','fcal','tracks_path')
 
-%% ARCOS formating of tracks and ERK signal activation definition
-ARCOS_matrix = [];
-i = 1;
-ERK_thrhld = 0.01; % default: 0.02 Signal threshold for ERK signal activation
-Median_global = median(Nuclei_ERK_int);
-
-for i=1:length(track_nuclei(1,2:end))
-    AM_aux = track_nuclei{1,i+1};
-    AM_aux(isnan(AM_aux(:,4)),:) = [];
-    AM_aux(:,5) =  i;
-    % remove duplicated time points
-    [~,unique_tp] = unique(AM_aux(:,1));
-    AM_aux = AM_aux(unique_tp,:);
-    % remove points beyond 400 time steps
-    AM_aux(AM_aux(:,1)+0.5>400,:) = [];
-    
-    % Filter by positive values after long-range median filter (30 steps)
-    % Removal of global effect on indiviual signal
-    AM_aux(:,4) = AM_aux(:,4) - Median_global(AM_aux(:,1)+0.5)';
-    % Removal of trend in individual signal
-    ERK_int_filter = smoothdata(AM_aux(:,4),'movmedian',30);
-    AM_aux(:,4) = AM_aux(:,4) - ERK_int_filter;
-    AM_aux(:,4) = AM_aux(:,4) > ERK_thrhld;
-
-    ARCOS_matrix = [ARCOS_matrix;AM_aux];
-    AM_aux = [];
-end
-
-% Formating of ERK activation matrix for ARCOS algorithm
-ARCOS_matrix = sortrows(ARCOS_matrix,1);
-ARCOS_matrix(:,1) = round(ARCOS_matrix(:,1),0,TieBreaker="tozero");
-DBscan_dist = ARCOS_matrix(ARCOS_matrix(:,1)==0,2:3);
-
-% Video of 50 frames with activated and unactivated single cell nuclei
-v = VideoWriter('ERK_waves_median','MPEG-4');
-open(v)
-for i = 1:50
-    test_mat = ARCOS_matrix(ARCOS_matrix(:,1)==i,:);
-    scatter(test_mat(:,2),test_mat(:,3),30,test_mat(:,4),'filled'); colormap(viridis); set(gca,'YDir','reverse'); xlim([0 1608]); ylim([0 1608]); axis square
-    text(50,50,['Frame:',' ',num2str(i)])
-    frame = getframe(gcf);
-    writeVideo(v,frame)
-end
-close(v)
-
-% Saving of ERK activation matrix in csv format for easy reading in R 
-ARCOS_matrix = array2table(ARCOS_matrix,'VariableNames',{'t','x','y','m','id'});
-writetable(ARCOS_matrix,[tracks_path filesep 'ARCOS_matrix.csv'])
-
-% Calculation of DBSCAN search distance from distance ditribution of nuclei
-DBscan_dist = pdist2(DBscan_dist,DBscan_dist,'euclidean','smallest',5);
-DBscan_dist = median(DBscan_dist(end,:));
-fprintf('Search radious for DBSCAN algorithm: %g \n',DBscan_dist)
-
-
-%% Figures 
+%% Single cell ERK activity analysis figures 
 % Heatmap of ERK activity organized by signal correlation 
 
 figure(1)
@@ -239,3 +184,59 @@ ph_ax = gca;
 ph_ax.ThetaLim = [0 180];
 set(gcf,'color','w')
 print([tracks_path filesep 'Radial_aligment.pdf'],'-dpdf')
+
+%% ARCOS formating of tracks and ERK signal activation definition
+ARCOS_matrix = [];
+i = 1;
+ERK_thrhld = 0.01; % default: 0.02 Signal threshold for ERK signal activation
+Median_global = median(Nuclei_ERK_int);
+
+for i=1:length(track_nuclei(1,2:end))
+    AM_aux = track_nuclei{1,i+1};
+    AM_aux(isnan(AM_aux(:,4)),:) = [];
+    AM_aux(:,5) =  i;
+    % remove duplicated time points
+    [~,unique_tp] = unique(AM_aux(:,1));
+    AM_aux = AM_aux(unique_tp,:);
+    % remove points beyond 400 time steps
+    AM_aux(AM_aux(:,1)+0.5>400,:) = [];
+    
+    % Filter by positive values after long-range median filter (30 steps)
+    % Removal of global effect on indiviual signal
+    AM_aux(:,4) = AM_aux(:,4) - Median_global(AM_aux(:,1)+0.5)';
+    % Removal of trend in individual signal
+    ERK_int_filter = smoothdata(AM_aux(:,4),'movmedian',30);
+    AM_aux(:,4) = AM_aux(:,4) - ERK_int_filter;
+    AM_aux(:,4) = AM_aux(:,4) > ERK_thrhld;
+
+    ARCOS_matrix = [ARCOS_matrix;AM_aux];
+    AM_aux = [];
+end
+
+% Formating of ERK activation matrix for ARCOS algorithm
+ARCOS_matrix = sortrows(ARCOS_matrix,1);
+ARCOS_matrix(:,1) = round(ARCOS_matrix(:,1),0,TieBreaker="tozero");
+DBscan_dist = ARCOS_matrix(ARCOS_matrix(:,1)==0,2:3);
+
+% Video of 50 frames with activated and unactivated single cell nuclei
+v = VideoWriter('ERK_waves_median','MPEG-4');
+open(v)
+for i = 1:50
+    test_mat = ARCOS_matrix(ARCOS_matrix(:,1)==i,:);
+    scatter(test_mat(:,2),test_mat(:,3),30,test_mat(:,4),'filled'); colormap(viridis); set(gca,'YDir','reverse'); xlim([0 1608]); ylim([0 1608]); axis square
+    text(50,50,['Frame:',' ',num2str(i)])
+    frame = getframe(gcf);
+    writeVideo(v,frame)
+end
+close(v)
+
+% Saving of ERK activation matrix in csv format for easy reading in R 
+ARCOS_matrix = array2table(ARCOS_matrix,'VariableNames',{'t','x','y','m','id'});
+writetable(ARCOS_matrix,[tracks_path filesep 'ARCOS_matrix.csv'])
+
+% Calculation of DBSCAN search distance from distance ditribution of nuclei
+DBscan_dist = pdist2(DBscan_dist,DBscan_dist,'euclidean','smallest',5);
+DBscan_dist = median(DBscan_dist(end,:));
+fprintf('Search radious for DBSCAN algorithm: %g \n',DBscan_dist)
+
+
