@@ -1,15 +1,16 @@
 %% Single cell ERK activity analysis
 % Julio Cesar Sanchez Rendon, PhD student, University of Tübingen
-% 09/08/2024
+% 19/02/2025
 clc, clear, close all
 
 %% Track extraction and formating from TrackMate (xml) files
 % Call tracks file
-tracks_path = '/Users/Julio/Desktop/20240801_LM_ERK_nuclei/Ctr_4';
-tracks_file = 'Ctr_IF5_Pos3_CFP_16h.xml';
-time_step = 5; % [min] time between frames
+tracks_path = '/Users/Julio/Desktop/Data_MDCK_JAT607_PD_PMA_2024_04_09_delta2.5min/LM_IF13_Pos8';
+tracks_file = 'Pos8_CFP.xml';
+time_step = 2.5; % [min] time between frames
 fcal = 0.28;   % [um/pixel] Microscopy calibration factor
 img_size =  1608; % [pixel] Size of original image
+Max_distance = 30; % [pixel] Maximum distance of frame-to-frame linking
 tracks = readstruct([tracks_path,filesep,tracks_file]); 
 nFrames = tracks.Settings.ImageData.nframesAttribute;
 img_height = tracks.Settings.ImageData.heightAttribute;
@@ -43,16 +44,15 @@ for j=1:size(tracks,2)
     end
 
     % Track properties
-    track_nuclei{2,j} = sqrt(sum(diff(single_track(:,2:3)).^2,2)).*fcal;% Displacement [um]
-    track_nuclei{3,j} = track_nuclei{2,j}./(time_step/60); % speed [um/h]
+    track_nuclei{2,j} = sqrt(sum(diff((single_track(:,2:3)).*fcal).^2,2));% Displacement [um]
+    track_nuclei{3,j} = track_nuclei{2,j}.*(60/time_step); % speed [um/h]
     track_nuclei{4,j} = sum(track_nuclei{2,j}); % Total traveled distance [um]
-    track_nuclei{5,j} = (sqrt(sum((single_track(end,2:3)-single_track(1,2:3)).^2))*fcal)./track_nuclei{4,j}; % Persistance
+    track_nuclei{5,j} = (sqrt(sum((single_track(end,2:3)-single_track(1,2:3)).^2))*fcal)./track_nuclei{4,j}; % Persistence
     A = diff(single_track(:,2:3)); % x and y vector-coor for nuclei displacements
     B = single_track(2:end,2:3) - repmat(img_center,length(single_track(2:end,1)),2); % x and y coor w.r.t center
     track_nuclei{6,j} = atan2d((A(:,1).*B(:,2)-A(:,2).*B(:,1)),(A(:,1).*B(:,1)+A(:,2).*B(:,2))); % Angle w.r.t center of image [0 to +/-180°]
     Cen_coor_ang = atan2d(B(:,2),B(:,1));
-    track_nuclei{7,j} = (A(:,1).*cosd(Cen_coor_ang) + A(:,2).*sind(Cen_coor_ang))./(time_step/60); % Radial strain rate [um/h]: traveled radial distance/time_step
-    track_nuclei{8,j} = tracks(j).NUMBER_SPLITSAttribute;
+    track_nuclei{7,j} = tracks(j).NUMBER_SPLITSAttribute;
     single_track = [];
     A = [];
     B = [];
@@ -130,7 +130,6 @@ save([tracks_path,filesep,'Analysis.mat'],'track_nuclei','Nuclei_ERK_int','time_
 
 %% Single cell ERK activity analysis figures 
 % Heatmap of ERK activity organized by signal correlation 
-
 figure(1)
 htmp_type = "position";
 switch htmp_type
@@ -171,8 +170,26 @@ set(gca,'FontName','Arial','FontSize',16)
 set(gcf,"Color",'w','Units','centimeters',"Position",[0,0,40,40])
 print([tracks_path filesep 'heatmap.eps'],'-depsc')
 
-% Plot of radial aligment
+% Single-cell ERK signal statistics 
 figure(2)
+ERK_time_series = Nuclei_ERK_int(Tree_order,:);
+median_erk_time_series = median(ERK_time_series(:,1:length(time_plot)));
+iqr_erk_time_series = quantile(ERK_time_series(:,1:length(time_plot)),[0.25 0.75]);
+plot(time_plot,median_erk_time_series,'-b','LineWidth',1)
+hold on
+patch([time_plot,flip(time_plot)],[iqr_erk_time_series(1,:),flip(iqr_erk_time_series(2,:))],'b','FaceAlpha',0.1,'EdgeColor','w')
+hold off
+box off
+xlim([time_plot(1),time_plot(end)])
+ylim([0.4 1.8])
+ylabel('Median of ERK signal')
+xlabel('Time (h)')
+set(gca,'FontName','Arial','FontSize',16)
+set(gcf,"Color",'w','Units','centimeters',"Position",[0,0,40,25])
+print([tracks_path filesep 'heatmap_statistics.pdf'],'-dpdf','-bestfit')
+
+% Plot of radial aligment distribution
+figure(3)
 i=1;
 Radial_align = [];
 for i=2:length(track_nuclei(6,2:end))
@@ -184,6 +201,49 @@ ph_ax = gca;
 ph_ax.ThetaLim = [0 180];
 set(gcf,'color','w')
 print([tracks_path filesep 'Radial_aligment.pdf'],'-dpdf')
+
+% Plot of cell speed distribution
+figure(4)
+cell_speeds = cell2mat(track_nuclei(3,:)');
+cell_speeds(cell_speeds>Max_distance*fcal*60/time_step) = []; % Remove speeds with displacement higher than maximum linked distance
+i=1;
+for i = 1:3
+    cell_speeds = rmoutliers(cell_speeds,"median"); % remove outliers iteratively
+end
+boxplot(cell_speeds,'Symbol','o');
+ylim([0 35])
+ylabel('Cell speed (µm/h)')
+set(findobj(gca,'type','line'),'linew',2)
+set(gca,'FontName','Arial','FontSize',16,'XTick',[])
+set(gcf,'color','w')
+print([tracks_path filesep 'Cell_speed.pdf'],'-dpdf')
+
+% Plot of cell directionality distribution
+figure(5)
+boxplot(cell2mat(track_nuclei(5,:)),'Symbol','o')
+ylabel('Directionality (a.u.)')
+ylim([0 1])
+set(findobj(gca,'type','line'),'linew',2)
+set(gca,'FontName','Arial','FontSize',16,'XTick',[])
+set(gcf,'color','w')
+print([tracks_path filesep 'Cell_directionality.pdf'],'-dpdf')
+
+% Generation of CVS file with radial alignment angles, cell speeds and linear persistance
+Info_cell = {deg2rad((abs(Radial_align))),cell_speeds,cell2mat(track_nuclei(5,:))'};
+length_cell = cellfun(@length,Info_cell);
+max_size = max(length_cell);
+i = 1;
+for i = 1:3
+    if length_cell(i) < max_size
+        Info_cell{i} = [Info_cell{:,i};NaN(max_size-length_cell(i),1)];
+    end
+end
+
+Migration_analysis = table(Info_cell{1},Info_cell{2},Info_cell{3},...
+    'VariableNames',{'Radial_alignment','Cell_speed','Linear_persistence'});
+
+writetable(Migration_analysis,[tracks_path,filesep,'Migration_analysis.csv'],'Delimiter','tab','WriteVariableNames',true);
+
 
 %% ARCOS formating of tracks and ERK signal activation definition
 ARCOS_matrix = [];
@@ -237,6 +297,4 @@ writetable(ARCOS_matrix,[tracks_path filesep 'ARCOS_matrix.csv'])
 % Calculation of DBSCAN search distance from distance ditribution of nuclei
 DBscan_dist = pdist2(DBscan_dist,DBscan_dist,'euclidean','smallest',5);
 DBscan_dist = median(DBscan_dist(end,:));
-fprintf('Search radious for DBSCAN algorithm: %g \n',DBscan_dist)
-
-
+fprintf('Search radius for DBSCAN algorithm: %g \n',DBscan_dist)
