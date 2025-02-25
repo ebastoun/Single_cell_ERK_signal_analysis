@@ -38,7 +38,7 @@ for (i in num_t_steps) { # time point
   num_collid = as.vector(unlist(num_collid))
   data_plot = ARCOS_matrix[t == i,]
   p = ggplot() + geom_point(data=data_plot,aes(x,y,colour = m),size=0.75) + scale_x_continuous()  + scale_y_continuous() + scale_y_reverse() +
-    coord_fixed(ratio=1,xlim = c(0,1608), ylim = rev(c(0,1608)), expand = FALSE) + scale_color_gradient(low="blue", high="red") +
+    coord_fixed(ratio=1,xlim = c(0,field_of_view), ylim = rev(c(0,field_of_view)), expand = FALSE) + scale_color_gradient(low="blue", high="red") +
     theme_gray(base_size = 10)
   
   for (j in num_collid ) { # collective events
