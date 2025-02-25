@@ -2,7 +2,7 @@
 
 ## Experimental data
 
-This example includes an 8-hour recording of MDCK cell monolayer, where each frame was taken in regular intervals of 10 minutes (48 frames in total). The recording was performed with a 40x objective in a Nikon Eclipse Ti2-E Inverted Fluorescence Microscope, with calibration factor of 0.28 μm per pixel, with image size of 1608x1608 pixels. However, due to file size limitation in Github, the exemplary data was resized to an image size of 804x804 pixel with calibration factor of 0.56 μm per pixel and certain files have been compressed (.zip extension).
+This example includes an 3-hour recording of MDCK cell monolayer, where each frame was taken in regular intervals of 10 minutes (48 frames in total). The recording was performed with a 40x objective in a Nikon Eclipse Ti2-E Inverted Fluorescence Microscope, with calibration factor of 0.28 μm per pixel, with image size of 1608x1608 pixels. However, due to file size limitation in Github, the exemplary data was resized to an image size of 804x804 pixel with calibration factor of 0.56 μm per pixel and certain files have been compressed (.zip extension).
 
 
 
