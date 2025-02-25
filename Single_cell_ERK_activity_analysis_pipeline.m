@@ -5,9 +5,9 @@ clc, clear, close all
 
 %% Track extraction and formating from TrackMate (xml) files
 % Call tracks file
-tracks_path = '/Users/Julio/Desktop/Data_MDCK_JAT607_PD_PMA_2024_04_09_delta2.5min/LM_IF13_Pos8';
-tracks_file = 'Pos8_CFP.xml';
-time_step = 2.5; % [min] time between frames
+tracks_path = '/Users/Julio/Desktop/ERK analysis example';
+tracks_file = 'Example_CFP.xml';
+time_step = 10; % [min] time between frames
 fcal = 0.28;   % [um/pixel] Microscopy calibration factor
 img_size =  1608; % [pixel] Size of original image
 Max_distance = 30; % [pixel] Maximum distance of frame-to-frame linking
@@ -63,9 +63,9 @@ time = unique(time);
 time(mod(time-round(time),0.5)~=0) = [];
 time((time-round(time)) ~= -0.5) = [];
 
-% Correction for tracks with 3 or more split events
+% Correction for tracks with 2 or more split events
 i = 1;
-for i=find(table2array(table(track_nuclei{8,:}))>=3)
+for i=find(table2array(table(track_nuclei{7,:}))>=2)
     c = find(ismember(track_nuclei{1,i}(:,1),setdiff(track_nuclei{1,i}(:,1),time)));
     track_nuclei{1,i}(c,:) = []; 
     u_times = tabulate(track_nuclei{1,i}(:,1));
@@ -75,8 +75,8 @@ end
 
 %% ERK intensity and single cell track matching
 % Call images
-ERK_img = 'Ctr_IF5_Pos3_ERK_16h.tif';     % ERK intensity image name
-seg_img = 'MASK_Nuclei_segmentation.tif'; % Nuclei segmentation image name
+ERK_img = 'Example_ERK.tif';     % ERK intensity image name
+seg_img = 'MASK_Original_segmented_nuclei.tif'; % Nuclei segmentation image name
 ERK_img_num = imfinfo([tracks_path,filesep,ERK_img]);
 ERK_img_num = length(ERK_img_num);
 
@@ -122,7 +122,7 @@ nuc_erk = nuc_erk(1:length(track_nuclei{1,i}(:,1)));
 end
 track_nuclei{1,i}(:,4) = nuc_erk;
 end
-vars = {'Track','Displacement','Speed','Total traveled distance','Persistance','Angle w.r.t center','Radial strain rate','Spliting events'}';
+vars = {'Track','Displacement','Speed','Total traveled distance','Persistance','Angle w.r.t center','Spliting events'}';
 track_nuclei = cat(2,vars,track_nuclei);
 
 % save analysis in cell per nucleus: time, x-coor, y-coor, ERK intensity
@@ -200,11 +200,11 @@ polarhistogram(deg2rad((abs(Radial_align))),24);
 ph_ax = gca;
 ph_ax.ThetaLim = [0 180];
 set(gcf,'color','w')
-print([tracks_path filesep 'Radial_aligment.pdf'],'-dpdf')
+print([tracks_path filesep 'Radial_alignment.pdf'],'-dpdf')
 
 % Plot of cell speed distribution
 figure(4)
-cell_speeds = cell2mat(track_nuclei(3,:)');
+cell_speeds = cell2mat(track_nuclei(3,2:end)');
 cell_speeds(cell_speeds>Max_distance*fcal*60/time_step) = []; % Remove speeds with displacement higher than maximum linked distance
 i=1;
 for i = 1:3
@@ -220,7 +220,7 @@ print([tracks_path filesep 'Cell_speed.pdf'],'-dpdf')
 
 % Plot of cell directionality distribution
 figure(5)
-boxplot(cell2mat(track_nuclei(5,:)),'Symbol','o')
+boxplot(cell2mat(track_nuclei(5,2:end)),'Symbol','o')
 ylabel('Directionality (a.u.)')
 ylim([0 1])
 set(findobj(gca,'type','line'),'linew',2)
@@ -229,7 +229,7 @@ set(gcf,'color','w')
 print([tracks_path filesep 'Cell_directionality.pdf'],'-dpdf')
 
 % Generation of CVS file with radial alignment angles, cell speeds and linear persistance
-Info_cell = {deg2rad((abs(Radial_align))),cell_speeds,cell2mat(track_nuclei(5,:))'};
+Info_cell = {deg2rad((abs(Radial_align))),cell_speeds,cell2mat(track_nuclei(5,2:end))'};
 length_cell = cellfun(@length,Info_cell);
 max_size = max(length_cell);
 i = 1;
@@ -248,7 +248,7 @@ writetable(Migration_analysis,[tracks_path,filesep,'Migration_analysis.csv'],'De
 %% ARCOS formating of tracks and ERK signal activation definition
 ARCOS_matrix = [];
 i = 1;
-ERK_thrhld = 0.01; % default: 0.02 Signal threshold for ERK signal activation
+ERK_thrhld = 0.1; % default: 0.02 Signal threshold for ERK signal activation
 Median_global = median(Nuclei_ERK_int);
 
 for i=1:length(track_nuclei(1,2:end))
@@ -279,12 +279,14 @@ ARCOS_matrix(:,1) = round(ARCOS_matrix(:,1),0,TieBreaker="tozero");
 DBscan_dist = ARCOS_matrix(ARCOS_matrix(:,1)==0,2:3);
 
 % Video of 50 frames with activated and unactivated single cell nuclei
-v = VideoWriter('ERK_waves_median','MPEG-4');
+length_video = min([50,size(Nuclei_ERK_int,2)]);
+figure
+v = VideoWriter([tracks_path,filesep,'ERK_waves_median'],'MPEG-4');
 open(v)
-for i = 1:50
-    test_mat = ARCOS_matrix(ARCOS_matrix(:,1)==i,:);
+for i = 1:length_video
+    test_mat = ARCOS_matrix(ARCOS_matrix(:,1)==(i-1),:);
     scatter(test_mat(:,2),test_mat(:,3),30,test_mat(:,4),'filled'); colormap(viridis); set(gca,'YDir','reverse'); xlim([0 1608]); ylim([0 1608]); axis square
-    text(50,50,['Frame:',' ',num2str(i)])
+    text(50,50,['Frame:',' ',num2str(i-1)])
     frame = getframe(gcf);
     writeVideo(v,frame)
 end
