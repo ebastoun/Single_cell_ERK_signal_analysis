@@ -12,7 +12,7 @@ library(sf)
 library(dplyr)
 
 ## Call matrix from single cell analysis
-folder_path = '/Users/Julio/Desktop/20240801_LM_ERK_nuclei/Ctr_4_thld_001'
+folder_path = '/Users/Julio/Desktop/ERK analysis example'
 file_name = 'ARCOS_matrix.csv'
 ARCOS_matrix = read.csv(paste(c(folder_path,file_name),collapse = "/"),header = TRUE)
 cal_factor = 0.28 # [um/px] Calibration factor
@@ -84,7 +84,7 @@ write.csv(Data_hull, file = paste(folder_path,"arcos_analysis.csv",sep="",collap
 ################################################################################
 
 ## Load analysis of data 
-Analysis_file = paste(c(folder_path,"Frames","arcos_analysis.csv"),sep = "",collapse = "/")
+Analysis_file = paste(c(folder_path,"arcos_analysis.csv"),sep = "",collapse = "/")
 Data_hull = read.csv(Analysis_file)
 if (!is.null(Data_hull$X)) {
   Data_hull = Data_hull[,seq(2,5)]
@@ -123,4 +123,4 @@ Median_total_area = median(Event_total_area)
 
 # Results display
 print(paste(c('Median number of events:',round(Events_per_hour,digits = 3),"per mm^2-h"), collapse = " "))
-print(paste(c('Median event area:',round(Median_total_area,digits = 3),"mm^2"), collapse = " "))
+print(paste(c('Median event area:',round(Median_total_area,digits = 3),"um^2"), collapse = " "))
