@@ -79,7 +79,7 @@ for (i in num_t_steps) { # time point
 }
 
 ## Save analysis data
-write.csv(Data_hull, file = paste(folder_path,"arcos_analysis.csv",sep="",collapse ="/"),row.names = FALSE)
+write.csv(Data_hull, file = paste(c(folder_path,"arcos_analysis.csv"),sep="",collapse ="/"),row.names = FALSE)
 
 ################################################################################
 
