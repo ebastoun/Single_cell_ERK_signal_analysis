@@ -2,7 +2,9 @@
 
 ## Experimental data
 
-This example includes an 8-hour recording of MDCK cell monolayer, where each frame was taken in regular intervals of 10 minutes (48 frames in total). The recording was performed with a 40x objective in a Nikon Eclipse Ti2-E Inverted Fluorescence Microscope, with calibration factor of 0.28 μm per pixel. The size of the image is 1608x1608 pixels. 
+This example includes an 8-hour recording of MDCK cell monolayer, where each frame was taken in regular intervals of 10 minutes (48 frames in total). The recording was performed with a 40x objective in a Nikon Eclipse Ti2-E Inverted Fluorescence Microscope, with calibration factor of 0.28 μm per pixel, with image size of 1608x1608 pixels. However, due to file size limitation in Github, the exemplary data was resized to an image size of 402x402 pixel with calibration factor of 1.12 μm per pixel.
+
+
 
 - Images of nuclei for tracking (CFP channel): Example_CFP.tif
 - Images of FRET-based ERK activity biosensor to calculate ERK activity maps (FRET to CFP ratio): Example_FRET.tif
